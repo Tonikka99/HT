@@ -13,25 +13,23 @@ namespace RiddleGame;
 [SuppressMessage("ReSharper", "InconsistentNaming")] // vammainen "_" ehdotus poistetu
 public class RiddleGame : PhysicsGame
 {
-    private PhysicsObject pelaaja;
+    private PhysicsObject _pelaaja;
     private Timer peliAjastin;
     private IntMeter aika;
     private IntMeter keratty;
-    
-    
-    /// <summary>
-    /// 
-    /// </summary>
+
+
     public override void Begin()
     {
+        AsetaTausta();
         LuoIntroKuva();
-        
-        pelaaja = LuoPelaaja(this, Level.Left + 20, 0);
-        AsetaOhjaimet(pelaaja);
+
+        _pelaaja = LuoPelaaja(Level.Left + 20, 0);
+        AsetaOhjaimet(_pelaaja);
         LuoKello();
-        
+
         LuoRajatutSeinat();
-        
+
         //Luodaan ajastin ja laitetaan se näkyväksi 
         aika = new IntMeter(40);
         Label aikalabel = new Label();
@@ -39,30 +37,75 @@ public class RiddleGame : PhysicsGame
         aikalabel.TextColor = Color.Red;
         aikalabel.Position = new Vector(0, Screen.Top - 40);
         Add(aikalabel);
-        
-        
+
+
         // Luodaan tarkistin joka tarkastaa aikaa ja lopettaa pelin jos aika loppuu
         peliAjastin = new Timer();
         peliAjastin.Interval = 1.0; // Laskee sekunteja
         peliAjastin.Timeout += VahennaAikaa;
-        peliAjastin.Start();
-        
+
+
         LuoAjastin(5.0, LuoKello);
         keratty = KeratytKellot();
-        AddCollisionHandler(pelaaja, "kello", TormaysKelloon);
+        AddCollisionHandler(_pelaaja, "kello", TormaysKelloon);
         
-        puzzle1(pelaaja);
+
+        puzzle1(_pelaaja);
     }
-    
+
 
     /// <summary>
-    /// 
+    /// Luodaan pelille background kuva
+    /// </summary>
+    private void AsetaTausta()
+    {
+        PhysicsObject tausta = new PhysicsObject(Level.Width, Level.Height);
+        tausta.Y = Level.Center.Y;
+        tausta.X = Level.Center.X;
+        tausta.Image = LoadImage("karttaLayout");
+        tausta.IgnoresCollisionResponse = true;
+        Add(tausta, -1);
+
+    }
+
+
+    /// <summary>
+    /// Luodaan aluksi kuva joka avaa pelin "tarinaa" ja ehkä antaa vinkin
     /// </summary>
     private void LuoIntroKuva()
     {
-        Image tarinaKuva = LoadImage("tarinaKuva");
+        // Luodaan kuva-objekti, joka kattaa koko tason
+        PhysicsObject tarinaKuva = new PhysicsObject(Level.Width, Level.Height);
+        tarinaKuva.Position = Level.Center;
+        tarinaKuva.Image = LoadImage("tarinaKuva");
+        tarinaKuva.Tag = "IntroKuva";
+        tarinaKuva.CanRotate = false;
+        Add(tarinaKuva);
+
+        // Lisätään kuuntelijat WASD-näppäimille, jotka poistavat kuvan
+        Keyboard.Listen(Key.W, ButtonState.Pressed, () => PoistaKuva(tarinaKuva), "Poista tarinakuva");
+        Keyboard.Listen(Key.A, ButtonState.Pressed, () => PoistaKuva(tarinaKuva), "Poista tarinakuva");
+        Keyboard.Listen(Key.S, ButtonState.Pressed, () => PoistaKuva(tarinaKuva), "Poista tarinakuva");
+        Keyboard.Listen(Key.D, ButtonState.Pressed, () => PoistaKuva(tarinaKuva), "Poista tarinakuva");
     }
-    
+
+
+    /// <summary>
+    /// Poistaa kuvan ja aloittaa ajastimen
+    /// </summary>
+    /// <param name="kuva">Alkuteksti kuva "intro"</param>
+    private void PoistaKuva(GameObject kuva)
+    {
+        peliAjastin.Start();
+        kuva.Destroy();
+    }
+
+
+    /// <summary>
+    /// Luodaan peliin ajastin
+    /// </summary>
+    /// <param name="intervalli">Haluttu toiminto 5sec välein</param>
+    /// <param name="toiminto">kello</param>
     private void LuoAjastin(double intervalli, Action toiminto)
     {
         Timer ajastin = new Timer();
@@ -71,17 +114,16 @@ public class RiddleGame : PhysicsGame
         ajastin.Start();
     }
 
-    
-    
+
     /// <summary>
     /// Luo uuden kellon ajastimen avulla.
     /// </summary>
     private void LuoKello()
     {
         // Rajojen sisäpuolelle jäävä alue
-        double minX = Level.Left + 40;  // Esineen leveys
+        double minX = Level.Left + 40; // Esineen leveys
         double maxX = Level.Right - 40;
-        double minY = Level.Bottom + 40;  // Esineen korkeus
+        double minY = Level.Bottom + 40; // Esineen korkeus
         double maxY = Level.Top - 40;
 
         // Arvotaan satunnainen sijainti rajojen sisällä
@@ -90,22 +132,20 @@ public class RiddleGame : PhysicsGame
 
         // Luo esine
         int elinika = 10000;
-        PhysicsObject kello = new PhysicsObject(50, 50);  // Esineen koko (leveys, korkeus)
-        kello.Position = new Vector(randomX, randomY);  // Sijoita satunnaisesti
-        kello.Color = Color.Yellow;  // Esineen väri
-        kello.Tag = "kello";  // Asetetaan tag esineelle, joka voidaan tunnistaa
-        kello.CanRotate = false;  // Estetään esineen pyöriminen
+        PhysicsObject kello = new PhysicsObject(30, 30); // Esineen koko (leveys, korkeus)
+        kello.Position = new Vector(randomX, randomY); // Sijoita satunnaisesti
+        kello.Color = Color.Yellow; // Esineen väri
+        kello.Tag = "kello"; // Asetetaan tag esineelle, joka voidaan tunnistaa
+        kello.CanRotate = false; // Estetään esineen pyöriminen
         kello.LifetimeLeft = TimeSpan.FromMilliseconds(elinika);
-        
-        kello.Image = LoadImage("clock");  // Ladataan kuvan esineelle
-        kello.Height = 100;
-        kello.Width = 100; // Kuvan koko
+
+        kello.Image = LoadImage("clock");
         kello.IgnoresCollisionResponse = true;
-        
-        Add(kello);  // Lisätään esine peliin
+
+        Add(kello);
     }
 
-    
+
     /// <summary>
     /// Luodaan pelaaja hahmo
     /// </summary>
@@ -113,14 +153,62 @@ public class RiddleGame : PhysicsGame
     /// <param name="x">Pelaajan koko</param>
     /// <param name="y">Pelaajan koko</param>
     /// <returns>Palauttaa hahmon peliin</returns>
-    private static PhysicsObject LuoPelaaja(PhysicsGame peli, double x, double y)
+    private PhysicsObject LuoPelaaja(double x, double y)
     {
-        PhysicsObject pelaaja = new PhysicsObject(40.0, 40.0, Shape.Rectangle);
-        pelaaja.X = x;
-        pelaaja.Y = y;
-        pelaaja.CanRotate = false;
-        pelaaja.IgnoresCollisionResponse = true;
-        peli.Add(pelaaja);
+        // Luo pelaaja-objekti
+        PhysicsObject pelaaja = new PhysicsObject(100.0, 100.0, Shape.Rectangle)
+        {
+            X = x,
+            Y = y,
+            CanRotate = false,
+            IgnoresCollisionResponse = true
+        };
+
+        // Lataa animaation framet
+        Image[] animaatioKuvat =
+        {
+            LoadImage("hahmoLiike1"),
+            LoadImage("hahmoLiike2"),
+        };
+
+        // Luo animaatio
+        Animation animaatio = new Animation(animaatioKuvat)
+        {
+            FPS = 10 // Aseta animaation nopeus (framea sekunnissa)
+        };
+
+        // Lisätään animaatio pelaajalle
+        pelaaja.Animation = animaatio;
+
+        // Pelaaja ei ole vielä liikkumassa, animaatio on pysäytetty
+        pelaaja.Animation.Stop();
+
+        // Lisätään pelaaja peliin
+        Add(pelaaja);
+
+        // Seurataan pelaajan liikettä
+        Timer liikuntaTarkistus = new Timer();
+        liikuntaTarkistus.Interval = 0.1; // Tarkistetaan liikkumista useammin, esim. 0.1 sekunnin välein
+        liikuntaTarkistus.Timeout += () =>
+        {
+            if (Keyboard.IsKeyDown(Key.D) || Keyboard.IsKeyDown(Key.A) || Keyboard.IsKeyDown(Key.W) ||
+                Keyboard.IsKeyDown(Key.S))
+            {
+                if (!pelaaja.Animation.IsPlaying) // Jos animaatio ei ole jo käynnissä
+                {
+                    pelaaja.Animation.Start(); // Käynnistä animaatio
+                }
+            }
+            else
+            {
+                if (pelaaja.Animation.IsPlaying) // Jos animaatio on käynnissä ja pelaaja ei liiku
+                {
+                    pelaaja.Animation.Stop(); // Pysäytä animaatio
+                }
+            }
+        };
+        liikuntaTarkistus.Start();
+
         return pelaaja;
     }
 
@@ -133,16 +221,16 @@ public class RiddleGame : PhysicsGame
     private void TormaysKelloon(PhysicsObject hahmo, PhysicsObject kello)
     {
         aika.Value += 15;
-        keratty.Value ++; 
+        keratty.Value++;
         Remove(kello);
     }
 
 
     /// <summary>
-    /// 
+    /// Laskuri joka kertoo montako kelloa olet kerännyt TODO: Myöhemmin myös scoreboard
     /// </summary>
-    /// <returns></returns>
-    public IntMeter KeratytKellot()
+    /// <returns>palauttaa laskurin</returns>
+    private IntMeter KeratytKellot()
     {
         keratty = new IntMeter(0); // Luodaan laskuri
         Label keratytlabel = new Label();
@@ -153,8 +241,8 @@ public class RiddleGame : PhysicsGame
         return keratty; // Palautetaan laskuri
     }
 
-    
-    
+
+
     /// <summary>
     /// Ohjelma tarkastelee aikaa ja ajaa lopetus mikäli aika loppuu
     /// </summary>
@@ -168,19 +256,20 @@ public class RiddleGame : PhysicsGame
             Havisit();
         }
     }
-    
-    
+
+
     /// <summary>
     /// Luodaan pelaajalle kyky liikkua
     /// </summary>
     /// <param name="pelaaja">pelattava hahmo</param>
     private void AsetaOhjaimet(PhysicsObject pelaaja)
     {
-        Vector[] suunnat = {
-            new (0, 200),  // Ylös (W)
-            new (0, -200), // Alas (S)
-            new (-200, 0), // Vasemmalle (A)
-            new (200, 0)   // Oikealle (D)
+        Vector[] suunnat =
+        {
+            new(0, 200), // Ylös (W)
+            new(0, -200), // Alas (S)
+            new(-200, 0), // Vasemmalle (A)
+            new(200, 0) // Oikealle (D)
         };
 
         Key[] nappaimet = { Key.W, Key.S, Key.A, Key.D };
@@ -193,13 +282,12 @@ public class RiddleGame : PhysicsGame
 
         Keyboard.Listen(Key.H, ButtonState.Pressed, ShowControlHelp, "Näytä ohjeet");
         Keyboard.Listen(Key.Escape, ButtonState.Pressed, ConfirmExit, "Lopeta peli");
-        
-        //TODO: InspectItem ohjelma jolla voi katsella kerättyä esinettä.
-        //Keyboard.Listen(Key.F, ButtonState.Pressed, InspectItem, "Tarkastele esinettä", pelaaja)
+
+        //Keyboard.Listen(Key.E, ButtonState.Pressed, InteractWithBox, "Press E to interact");
     }
 
-    
-    
+
+
     /// <summary>
     /// Luodaan pelaajalle nopeus
     /// </summary>
@@ -209,23 +297,25 @@ public class RiddleGame : PhysicsGame
     {
         pelaaja.Velocity = nopeus;
     }
-    
-    
+
+
     /// <summary>
     /// Luodaan rajatut seinät 
     /// </summary>
     private void LuoRajatutSeinat()
     {
-        Level.CreateLeftBorder(0, true);
-        Level.CreateBottomBorder(0, true);
-        Level.CreateRightBorder(0, true);
-        Level.CreateTopBorder(0, true);
-        
+        Level.CreateLeftBorder(0, false);
+        Level.CreateBottomBorder(0, false);
+        Level.CreateRightBorder(0, false);
+        Level.CreateTopBorder(0, false);
+
+        _pelaaja.IgnoresCollisionResponse = false;
+
         //var a = Level.CreateTopBorder(0, true);
         //a.Height = 100;
         // Säädetään korkeus ja leveys
     }
-    
+
 
     /// <summary>
     /// Häviämiseen liittyvä "fade to black" efekti
@@ -238,47 +328,60 @@ public class RiddleGame : PhysicsGame
         loppu.Y = Level.Center.Y;
         loppu.Image = LoadImage("the_end");
         Add(loppu);
-    
+
         // Voit lisätä myös muita toimintoja, kuten peliin äänen toiston
         // Game.PlaySound("KoiranAani1");
-        
+
     }
 
 
     /// <summary>
-    /// Lasketaan onko kelloja kerätty oikea määrä ensimmäisen tehtävän avaamiseksi 
+    /// Luo keskelle ruutua yläosaan tekstin, jota voi käyttää pelin eri vaiheissa.
     /// </summary>
-    /// <param name="keratty">kerättävä objekti</param>
-    /// <returns>palauttaa true tai false</returns>
-    /// <example>
-    /// <pre name="test">
-    /// Keraily(3) === false;
-    /// Keraily(5) === true;
-    /// Keraily(10) === true;
-    /// </pre>
-    /// </example>
-    private static bool Keraily(int keratty)
+    /// <param name="teksti">Näytettävä teksti</param>
+    /// <param name="koko">Tekstin koko</param>
+    /// <returns>Palauttaa luodun Label-olion</returns>
+    public Label Teksti(string teksti, double koko = 40)
     {
-        return keratty >= 5;
+        Label label = new Label(teksti)
+        {
+            Position = new Vector(0, Screen.Top - 70), // Keskellä ruudun yläosaa
+
+        };
+        label.Color = Color.Red;
+
+        Add(label); // Lisätään label peliin
+        return label; // Palautetaan label, jotta sen ominaisuuksia voi muokata myöhemmin
     }
-    
-    
+
+
+    /// <summary>
+    /// Tarkastellaan aikaa jokaisella framella
+    /// </summary>
+    /// <param name="time">aika</param>
     protected override void Update(Time time)
     {
         base.Update(time);
-        puzzle1(pelaaja); // Tarkistetaan ehdot jokaisella framella
+        puzzle1(_pelaaja);
     }
-    
-    
 
-    public void puzzle1(PhysicsObject pelaaja)
+
+    /// <summary>
+    /// Ensimmäinen puzzle1. Pelaajan pitää kerätä 5 kelloa ja odottaa että aika laskee alle 30
+    /// </summary>
+    /// <param name="hahmo">pelattava hahmo</param>
+    // ReSharper disable once MemberCanBePrivate.Global
+    public void puzzle1(PhysicsObject hahmo)
     {
-        if (aika.Value <= 30)
+        if (aika.Value <= 30 && keratty.Value >= 5)
         {
-            Console.WriteLine("Se toimii yippeee");
+            Teksti("Something has changed. I should check that old clock");
         }
     }
-    
+
+    /*public void puzzle2(PhysicsObject hahmo)
+    {
+        
+    }*/
     
 }
-

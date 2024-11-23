@@ -103,4 +103,8 @@ C:\Program Files (x86)\JYU\ohj1ht\RiddleGame\RiddleGame\obj\Debug\net8.0\RiddleG
 C:\Program Files (x86)\JYU\ohj1ht\RiddleGame\RiddleGame\obj\Debug\net8.0\RiddleGame.genruntimeconfig.cache
 C:\Program Files (x86)\JYU\ohj1ht\RiddleGame\RiddleGame\obj\Debug\net8.0\ref\RiddleGame.dll
 C:\Program Files (x86)\JYU\ohj1ht\RiddleGame\RiddleGame\bin\Debug\net8.0\Content\the_end.png
+C:\Program Files (x86)\JYU\ohj1ht\RiddleGame\RiddleGame\bin\Debug\net8.0\Content\tarinaKuva.png
+C:\Program Files (x86)\JYU\ohj1ht\RiddleGame\RiddleGame\bin\Debug\net8.0\Content\karttaLayout.png
 C:\Program Files (x86)\JYU\ohj1ht\RiddleGame\RiddleGame\bin\Debug\net8.0\Content\clock.png
+C:\Program Files (x86)\JYU\ohj1ht\RiddleGame\RiddleGame\bin\Debug\net8.0\Content\hahmoLiike1.png
+C:\Program Files (x86)\JYU\ohj1ht\RiddleGame\RiddleGame\bin\Debug\net8.0\Content\hahmoLiike2.png

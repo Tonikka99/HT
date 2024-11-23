@@ -22,7 +22,24 @@
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
       <None Remove="Content\clock.item.png" />
+      <None Remove="Content\tarinaKuva.png" />
+      <Content Include="Content\tarinaKuva.png">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Content\karttaLayout.png" />
+      <Content Include="Content\karttaLayout.png">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Content\clock.png" />
       <Content Include="Content\clock.png">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Content\hahmoLiike1.png" />
+      <Content Include="Content\hahmoLiike1.png">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <None Remove="Content\hahmoLiike2.png" />
+      <Content Include="Content\hahmoLiike2.png">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
     </ItemGroup>
