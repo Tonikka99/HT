@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("RiddleGame")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+933fe984e67e6c769c45b0bfc7d40fec1496d508")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7b0b3495f0c8f03ce2f8ecb397e15cfc8c155d12")]
 [assembly: System.Reflection.AssemblyProductAttribute("RiddleGame")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RiddleGame")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

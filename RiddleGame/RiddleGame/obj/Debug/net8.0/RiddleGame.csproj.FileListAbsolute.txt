@@ -108,3 +108,4 @@ C:\Program Files (x86)\JYU\ohj1ht\RiddleGame\RiddleGame\bin\Debug\net8.0\Content
 C:\Program Files (x86)\JYU\ohj1ht\RiddleGame\RiddleGame\bin\Debug\net8.0\Content\clock.png
 C:\Program Files (x86)\JYU\ohj1ht\RiddleGame\RiddleGame\bin\Debug\net8.0\Content\hahmoLiike1.png
 C:\Program Files (x86)\JYU\ohj1ht\RiddleGame\RiddleGame\bin\Debug\net8.0\Content\hahmoLiike2.png
+C:\Program Files (x86)\JYU\ohj1ht\RiddleGame\RiddleGame\bin\Debug\net8.0\Content\KoodiNaytto.png

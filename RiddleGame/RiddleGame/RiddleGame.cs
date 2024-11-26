@@ -17,6 +17,11 @@ public class RiddleGame : PhysicsGame
     private Timer peliAjastin;
     private IntMeter aika;
     private IntMeter keratty;
+    private bool task1 = false;
+    private bool task2 = false;
+    private string pelaajanVastaus = ""; //Vastaus 1715.
+    private int oikeaKoodi = 1715; // Oikea koodi lukolle
+    private bool tehtavaSuoritettu = false;
 
 
     public override void Begin()
@@ -51,6 +56,10 @@ public class RiddleGame : PhysicsGame
         
 
         puzzle1(_pelaaja);
+        LuoPuzzle2Lukko(40, 40, task1);
+        puzzle2(_pelaaja, task1);
+        LuoNaytto(task1);
+        LuoLukkoJaTormays(100, 200);
     }
 
 
@@ -112,6 +121,7 @@ public class RiddleGame : PhysicsGame
         ajastin.Interval = intervalli;
         ajastin.Timeout += toiminto;
         ajastin.Start();
+        if (aika.Value <= 0) ajastin.Stop();
     }
 
 
@@ -143,6 +153,25 @@ public class RiddleGame : PhysicsGame
         kello.IgnoresCollisionResponse = true;
 
         Add(kello);
+    }
+
+    
+    /// <summary>
+    /// Luodaan näyttö ja laitetaan se esille mikäli ensimmäinen tehtävä on suoritettu 
+    /// </summary>
+    /// <param name="t1">tehtävä1</param>
+    private void LuoNaytto(bool t1)
+    {
+        if (t1) // Tarkistetaan, onko tehtävä 1 suoritettu
+        {
+            PhysicsObject naytto = new PhysicsObject(60, 60);
+            naytto.Position = new Vector(Level.Right - 100, Level.Top - 270);
+            naytto.Image = LoadImage("KoodiNaytto");
+            naytto.CanRotate = false;
+            naytto.IgnoresCollisionResponse = true;
+
+            Add(naytto);
+        }
     }
 
 
@@ -283,7 +312,7 @@ public class RiddleGame : PhysicsGame
         Keyboard.Listen(Key.H, ButtonState.Pressed, ShowControlHelp, "Näytä ohjeet");
         Keyboard.Listen(Key.Escape, ButtonState.Pressed, ConfirmExit, "Lopeta peli");
 
-        //Keyboard.Listen(Key.E, ButtonState.Pressed, InteractWithBox, "Press E to interact");
+        Keyboard.Listen(Key.Enter, ButtonState.Pressed, TarkistaVastaus, "Tarkista pelaajan vastaus");
     }
 
 
@@ -354,7 +383,31 @@ public class RiddleGame : PhysicsGame
         return label; // Palautetaan label, jotta sen ominaisuuksia voi muokata myöhemmin
     }
 
+    
+    /// <summary>
+    /// Näyttää viestin ja poistaa sen 5 sekunnin kuluttua.
+    /// </summary>
+    /// <param name="teksti">Näytettävä viesti</param>
+    private void NäytäViestilläAjastin(string teksti)
+    {
+        MessageDisplay.Add(teksti);
 
+        // Luo ajastin, joka tyhjentää viestin 5 sekunnin jälkeen
+        Timer ajastin = new Timer();
+        ajastin.Interval = 5.0; // Sekuntia
+        ajastin.Timeout += TyhjennäViestit;
+        ajastin.Start();
+    }
+
+    /// <summary>
+    /// Tyhjentää kaikki viestit MessageDisplaystä.
+    /// </summary>
+    private void TyhjennäViestit()
+    {
+        MessageDisplay.Clear();
+    }
+
+    
     /// <summary>
     /// Tarkastellaan aikaa jokaisella framella
     /// </summary>
@@ -373,15 +426,218 @@ public class RiddleGame : PhysicsGame
     // ReSharper disable once MemberCanBePrivate.Global
     public void puzzle1(PhysicsObject hahmo)
     {
+        
         if (aika.Value <= 30 && keratty.Value >= 5)
         {
             Teksti("Something has changed. I should check that old clock");
+            task1 = true;
+        }
+        else
+        {
+            task1 = false;
+        }
+    }
+    
+    
+    
+    void LuoKysymys()
+    {
+        MessageDisplay.Add("Guess the 4-digit code to open the lock!");
+    }
+
+    
+    
+    void LisääNumero(string numero)
+    {
+        pelaajanVastaus += numero; // Lisää syötetty numero vastaukseen
+    }
+    
+    
+    
+    void PoistaNumero()
+    {
+        if (pelaajanVastaus.Length > 0)
+        {
+            pelaajanVastaus = pelaajanVastaus.Remove(pelaajanVastaus.Length - 1);
         }
     }
 
-    /*public void puzzle2(PhysicsObject hahmo)
+
+    
+    void TarkistaVastaus()
+    {
+        if (pelaajanVastaus == "1715")
+        {
+            MessageDisplay.Add("Door Opened");
+        }
+        else
+        {
+            MessageDisplay.Add("*peep sound_effect. Much spoopy*");
+        }
+    }
+    
+    
+    /// <summary>
+    /// Luo toisen puzzle-esineen, kuten lukon tai oven.
+    /// </summary>
+    /// <param name="x">Lukon sijainti X-akselilla</param>
+    /// <param name="y">Lukon sijainti Y-akselilla</param>
+    /// <param name="t1">Onko tehtävä 1 suoritettu</param>
+    private void LuoPuzzle2Lukko(double x, double y, bool t1)
+    {
+        if (t1)
+        {
+        // Luo lukko-objekti
+        PhysicsObject lukko = new PhysicsObject(100, 200, Shape.Rectangle);
+        lukko.Position = new Vector(x, y);
+        lukko.Image = LoadImage("lukko");
+        lukko.CanRotate = false;
+        lukko.IgnoresCollisionResponse = true;
+        lukko.Tag = "lukko";
+
+        Add(lukko);
+
+        // Lisää tekstinäyttö ohjeeksi pelaajalle
+        Label ohje = new Label("Solve the code to open the lock!");
+        ohje.Position = new Vector(lukko.X, lukko.Y + 100);
+        Add(ohje);
+
+        // Kuuntele vastausta lukon avaamiseksi
+        Keyboard.Listen(Key.Enter, ButtonState.Pressed, () => TarkistaPuzzle2Vastaus(lukko, ohje),
+            "Tarkista pelaajan vastaus lukolle");
+        }   
+    }
+
+    /// <summary>
+    /// Tarkistaa, onko pelaajan syöttämä vastaus oikea ja poistaa lukon.
+    /// </summary>
+    /// <param name="lukko">Lukko-objekti, joka poistetaan oikealla vastauksella</param>
+    /// <param name="ohje">Ohjeen näyttö, joka poistetaan lukon kanssa</param>
+    private void TarkistaPuzzle2Vastaus(PhysicsObject lukko, Label ohje)
+    {
+        if (pelaajanVastaus == "1715")
+        {
+            MessageDisplay.Add("The lock opens with a click!");
+            Remove(lukko);
+            Remove(ohje);
+
+            // Voit lisätä tähän seuraavan vaiheen logiikan, kuten oven avaamisen
+            PhysicsObject ovi = new PhysicsObject(100, 150, Shape.Rectangle)
+            {
+                Position = new Vector(lukko.X, lukko.Y - 200),
+                Color = Color.Green,
+                IgnoresCollisionResponse = true
+            };
+            Add(ovi);
+            MessageDisplay.Add("A door appears. Escape quickly!");
+        }
+        else
+        {
+            MessageDisplay.Add("The lock buzzes. Wrong code!");
+        }
+    }
+
+
+    
+    /// <summary>
+    /// Tehtävä 2 jossa pitää laittaa oikeat luvut jotta peli etenee
+    /// </summary>
+    /// <param name="hahmo">pelattava hahmo</param>
+    /// <param name="t1">tarkastellaan aiempaa tehtävää</param>
+    public void puzzle2(PhysicsObject hahmo, bool t1)
+    {
+        if (t1)
+        {
+            LuoPuzzle2Lukko(Level.Center.X, Level.Center.Y, t1);
+            LuoKysymys();
+
+            // Kuuntele numeron lisäystä ja poistamista
+            Keyboard.Listen(Key.Enter, ButtonState.Pressed, TarkistaVastaus, "Tarkista pelaajan vastaus");
+            Keyboard.Listen(Key.Back, ButtonState.Pressed, PoistaNumero, "Poista viimeinen numero");
+            for (int i = 0; i <= 9; i++)
+            {
+                int numero = i; // Lukitse paikallinen muuttuja delegaatille
+                Keyboard.Listen((Key)Enum.Parse(typeof(Key), "D" + numero), ButtonState.Pressed, LisääNumero,
+                    "Lisää numero " + numero, numero.ToString());
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Luo lukko-objektin peliin ja lisää törmäyksen käsittelijän.
+    /// </summary>
+    /// <param name="x">Lukon sijainti X-akselilla</param>
+    /// <param name="y">Lukon sijainti Y-akselilla</param>
+    private void LuoLukkoJaTormays(double x, double y)
+    {
+        // Luo lukko-objekti
+        PhysicsObject lukko = new PhysicsObject(150, 250, Shape.Rectangle);
+        lukko.Position = new Vector(Level.Right -60, Level.Top - 350);
+        lukko.Tag = "lukko";
+        lukko.IsVisible = true;
+        lukko.CanRotate = false;
+        Add(lukko);
+
+        // Lisää törmäyksen käsittelijä pelaajan ja lukon välille
+        AddCollisionHandler(_pelaaja, lukko, AloitaNumeronArvaus);
+    }
+    
+
+    /// <summary>
+    /// Käynnistää numeron arvaustehtävän, kun pelaaja osuu lukkoon.
+    /// </summary>
+    /// <param name="pelaaja">Pelaajan hahmo</param>
+    /// <param name="lukko">Lukko-objekti</param>
+    private void AloitaNumeronArvaus(PhysicsObject pelaaja, PhysicsObject lukko)
+    {
+        if (task1 == true)
+        {
+            MessageDisplay.Add("You found a lock! Guess the code to open it.");
+            LuoKysymys(); // Luo kysymys ja aloita numeron arvaus
+
+            // Kuuntele pelaajan syöttämät numerot ja vastaukset
+            Keyboard.Listen(Key.E, ButtonState.Pressed, AloitaInput, "Aloita pelaajan vastaus");
+        }
+    }
+
+
+    private void AloitaInput()
+    {
+        Keyboard.Clear();
+        
+        Keyboard.Listen(Key.D0, ButtonState.Pressed, NumeroInput, "0");
+        Keyboard.Listen(Key.D1, ButtonState.Pressed, NumeroInput, "1");
+        Keyboard.Listen(Key.D2, ButtonState.Pressed, NumeroInput, "2");
+        Keyboard.Listen(Key.D3, ButtonState.Pressed, NumeroInput, "3");
+        Keyboard.Listen(Key.D4, ButtonState.Pressed, NumeroInput, "4");
+        Keyboard.Listen(Key.D5, ButtonState.Pressed, NumeroInput, "5");
+        Keyboard.Listen(Key.D6, ButtonState.Pressed, NumeroInput, "6");
+        Keyboard.Listen(Key.D7, ButtonState.Pressed, NumeroInput, "7");
+        Keyboard.Listen(Key.D8, ButtonState.Pressed, NumeroInput, "8");
+        Keyboard.Listen(Key.D9, ButtonState.Pressed, NumeroInput, "9");
+        
+        Keyboard.Listen(Key.Enter, ButtonState.Pressed, TarkistaVastaus, "Tarkista pelaajan vastaus");
+        Keyboard.Listen(Key.Back, ButtonState.Pressed, PoistaNumero, "Poista viimeinen numero");
+        for (int i = 0; i <= 9; i++)
+        {
+            int numero = i; // Lukitse paikallinen muuttuja delegaatille
+            Keyboard.Listen((Key)Enum.Parse(typeof(Key), "D" + numero), ButtonState.Pressed, LisääNumero,
+                "Lisää numero " + numero, numero.ToString());
+        }
+    }
+
+    private void NumeroInput()
     {
         
-    }*/
-    
+    }
+
+    public void exit(bool t1, bool t2)
+    {
+        if (t1 && t2)
+        {
+            Label oviAuki = new Label("Door has opened I must hurry in before timer runs out");
+            oviAuki.Position = new Vector(0, 100);
+            Add(oviAuki);
+        }
+    }
 }
