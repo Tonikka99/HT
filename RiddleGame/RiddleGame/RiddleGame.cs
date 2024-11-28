@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Jypeli;
+using Vector = Jypeli.Vector;
+
 // ReSharper disable All
 
 
@@ -16,6 +19,7 @@ public class RiddleGame : PhysicsGame
 {
     private PhysicsObject _pelaaja;
     private Timer peliAjastin;
+    private Timer kelloAjastin;
     private IntMeter aika;
     private IntMeter keratty;
     private bool task1;
@@ -34,33 +38,40 @@ public class RiddleGame : PhysicsGame
 
         LuoRajatutSeinat();
 
-        //Luodaan ajastin ja laitetaan se näkyväksi 
-        aika = new IntMeter(40);
-        Label aikalabel = new Label();
-        aikalabel.BindTo(aika);
-        aikalabel.TextColor = Color.Red;
-        aikalabel.Position = new Vector(0, Screen.Top - 40);
-        Add(aikalabel);
 
-
-        // Luodaan tarkistin joka tarkastaa aikaa ja lopettaa pelin jos aika loppuu
-        peliAjastin = new Timer();
-        peliAjastin.Interval = 1.0; // Laskee sekunteja
-        peliAjastin.Timeout += VahennaAikaa;
-
-
+        PeliAika();
         LuoAjastin(5.0, LuoKello);
         keratty = KeratytKellot();
-        AddCollisionHandler(_pelaaja, "kello", TormaysKelloon);
+        
         
 
         puzzle1(_pelaaja);
         puzzle2(task1);
         LuoLukkoJaTormays();
         
+        AddCollisionHandler(_pelaaja, "kello", TormaysKelloon);
         AddCollisionHandler(_pelaaja, "lukko", AloitaNumeronArvaus);
     }
 
+    
+    /// <summary>
+    ///  Luodaan ajastin ja laitetaan se näkyväksi
+    /// </summary>
+   private void PeliAika()
+   {
+       aika = new IntMeter(40);
+       Label aikalabel = new Label();
+       aikalabel.BindTo(aika);
+       aikalabel.TextColor = Color.Red;
+       aikalabel.Position = new Vector(0, Screen.Top - 40);
+       Add(aikalabel);
+       
+       // Luodaan tarkistin joka tarkastaa aikaa ja lopettaa pelin jos aika loppuu
+       peliAjastin = new Timer();
+       peliAjastin.Interval = 1.0; // Laskee sekunteja
+       peliAjastin.Timeout += VahennaAikaa;
+
+   }
 
     /// <summary>
     /// Luodaan pelille background kuva
@@ -126,6 +137,7 @@ public class RiddleGame : PhysicsGame
     private void PoistaKuva(GameObject kuva)
     {
         peliAjastin.Start();
+        kelloAjastin.Start();
         kuva.Destroy();
     }
 
@@ -135,14 +147,13 @@ public class RiddleGame : PhysicsGame
     /// </summary>
     /// <param name="intervalli">Haluttu toiminto 5sec välein</param>
     /// <param name="toiminto">kello</param>
-    private void LuoAjastin(double intervalli, Action toiminto)
+     void LuoAjastin(double intervalli, Action toiminto)
     {
-        if (task1 == false)
+        if (task1 == false && kelloAjastin == null) // Tarkistaa, onko ajastin jo olemassa
         {
-            Timer ajastin = new Timer();
-            ajastin.Interval = intervalli;
-            ajastin.Timeout += toiminto;
-            ajastin.Start();
+            kelloAjastin = new Timer(); // Luo uusi ajastin
+            kelloAjastin.Interval = intervalli;
+            kelloAjastin.Timeout += toiminto;
         }
     }
 
@@ -313,12 +324,12 @@ public class RiddleGame : PhysicsGame
     /// <param name="pelaaja">pelattava hahmo</param>
     private void AsetaOhjaimet(PhysicsObject pelaaja)
     {
-        Vector[] suunnat =
+        List<Vector> suunnat = new List<Vector>
         {
-            new(0, 200), // Ylös (W)
-            new(0, -200), // Alas (S)
-            new(-200, 0), // Vasemmalle (A)
-            new(200, 0) // Oikealle (D)
+            new Vector(0, 200),   // Ylös (W)
+            new Vector(0, -200),  // Alas (S)
+            new Vector(-200, 0),  // Vasemmalle (A)
+            new Vector(200, 0)    // Oikealle (D)
         };
 
         Key[] nappaimet = { Key.W, Key.S, Key.A, Key.D };
@@ -464,7 +475,7 @@ public class RiddleGame : PhysicsGame
     /// <param name="lukko">Lukko-objekti</param>
     private void AloitaNumeronArvaus(PhysicsObject pelaaja, PhysicsObject lukko)
     {
-        if (task2 == false)
+        if (task2 == false && task1 == true)
         {
             Teksti("You found a lock! Guess the code to open it.");
 
@@ -517,19 +528,22 @@ public class RiddleGame : PhysicsGame
     /// </summary>
     void TarkistaVastaus()
     {
-        if (pelaajanVastaus == "1815")
+        if (task1 == true)
         {
-            Keyboard.Clear();
-            AsetaOhjaimet(_pelaaja);
-            Teksti("Door Opened");
-            task2 = true;
-            Keyboard.Listen(Key.E, ButtonState.Pressed, LoppuTeksti, ":)");  
-        }
-        else
-        {
-            Keyboard.Clear();
-            AsetaOhjaimet(_pelaaja);
-            Teksti("*peep sound_effect. Much spoopy*");
+            if (pelaajanVastaus == "1815")
+            {
+                Keyboard.Clear();
+                AsetaOhjaimet(_pelaaja);
+                Teksti("Door Opened");
+                task2 = true;
+                Keyboard.Listen(Key.E, ButtonState.Pressed, LoppuTeksti, ":)");
+            }
+            else
+            {
+                Keyboard.Clear();
+                AsetaOhjaimet(_pelaaja);
+                Teksti("*peep sound_effect. Much spoopy*");
+            }
         }
     }
     
@@ -551,5 +565,8 @@ public class RiddleGame : PhysicsGame
         Add(voitto, 1);
         MessageDisplay.Add("Esc to quit the game.");
         Keyboard.Listen(Key.Escape, ButtonState.Pressed, ConfirmExit, "quit game");
+        
+        
     }
+   
 }
