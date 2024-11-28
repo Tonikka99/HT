@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using Jypeli;
 using Vector = Jypeli.Vector;
 
@@ -14,7 +13,7 @@ namespace RiddleGame;
 /// <summary>
 /// Hassun hauska ja haastava riddleGame
 /// </summary>
-[SuppressMessage("ReSharper", "InconsistentNaming")] // vammainen "_" ehdotus poistetu
+
 public class RiddleGame : PhysicsGame
 {
     private PhysicsObject _pelaaja;
@@ -24,6 +23,7 @@ public class RiddleGame : PhysicsGame
     private IntMeter keratty;
     private bool task1;
     private bool task2;
+    private bool nayttoLuotu = false;
     private string pelaajanVastaus = ""; //Vastaus 1815.
 
 
@@ -33,43 +33,38 @@ public class RiddleGame : PhysicsGame
         LuoIntroKuva();
 
         _pelaaja = LuoPelaaja(Level.Left + 20, 0);
-        AsetaOhjaimet(_pelaaja);
         LuoKello();
 
         LuoRajatutSeinat();
 
-
         PeliAika();
-        LuoAjastin(5.0, LuoKello);
-        keratty = KeratytKellot();
-        
-        
+        LuoAjastin(3.0, LuoKello);
+        keratty = KeratytKellot(keratty,this);
 
-        puzzle1(_pelaaja);
-        puzzle2(task1);
+        Puzzle1(_pelaaja);
+        Puzzle2(task1);
         LuoLukkoJaTormays();
         
         AddCollisionHandler(_pelaaja, "kello", TormaysKelloon);
         AddCollisionHandler(_pelaaja, "lukko", AloitaNumeronArvaus);
     }
 
-    
     /// <summary>
     ///  Luodaan ajastin ja laitetaan se näkyväksi
     /// </summary>
    private void PeliAika()
    {
-       aika = new IntMeter(40);
-       Label aikalabel = new Label();
-       aikalabel.BindTo(aika);
-       aikalabel.TextColor = Color.Red;
-       aikalabel.Position = new Vector(0, Screen.Top - 40);
-       Add(aikalabel);
-       
-       // Luodaan tarkistin joka tarkastaa aikaa ja lopettaa pelin jos aika loppuu
-       peliAjastin = new Timer();
-       peliAjastin.Interval = 1.0; // Laskee sekunteja
-       peliAjastin.Timeout += VahennaAikaa;
+           aika = new IntMeter(40);
+           Label aikalabel = new Label();
+           aikalabel.BindTo(aika);
+           aikalabel.TextColor = Color.Red;
+           aikalabel.Position = new Vector(0, Screen.Top - 40);
+           Add(aikalabel);
+
+           // Luodaan tarkistin joka tarkastaa aikaa ja lopettaa pelin jos aika loppuu
+           peliAjastin = new Timer();
+           peliAjastin.Interval = 1.0; // Laskee sekunteja
+           peliAjastin.Timeout += VahennaAikaa;
 
    }
 
@@ -102,7 +97,7 @@ public class RiddleGame : PhysicsGame
 
         };
         label.Color = Color.Red;
-        Timer.SingleShot(3.0, () => label.Destroy());
+        Timer.SingleShot(2.0, () => label.Destroy());
         
         Add(label);
         return label; // Palautetaan label, jotta sen ominaisuuksia voi muokata myöhemmin
@@ -139,6 +134,8 @@ public class RiddleGame : PhysicsGame
         peliAjastin.Start();
         kelloAjastin.Start();
         kuva.Destroy();
+        Keyboard.Clear();
+        AsetaOhjaimet(_pelaaja);
     }
 
 
@@ -149,7 +146,7 @@ public class RiddleGame : PhysicsGame
     /// <param name="toiminto">kello</param>
      void LuoAjastin(double intervalli, Action toiminto)
     {
-        if (task1 == false && kelloAjastin == null) // Tarkistaa, onko ajastin jo olemassa
+        if (task1 == false) // Tarkistaa, onko ajastin jo olemassa
         {
             kelloAjastin = new Timer(); // Luo uusi ajastin
             kelloAjastin.Interval = intervalli;
@@ -192,24 +189,28 @@ public class RiddleGame : PhysicsGame
     /// <summary>
     /// Luodaan näyttö ja laitetaan se esille mikäli ensimmäinen tehtävä on suoritettu 
     /// </summary>
-    /// <param name="t1">tehtävä1</param>
     private void LuoNaytto()
     {
+        if (nayttoLuotu == false)
+        {
+            
+            PhysicsObject naytto = new PhysicsObject(60, 60);
+            naytto.Position = new Vector(Level.Right - 100, Level.Top - 270);
+            naytto.Image = LoadImage("KoodiNaytto");
+            naytto.CanRotate = false;
+            naytto.IgnoresCollisionResponse = true;
+            
+            nayttoLuotu = true;
+            Add(naytto);
+        }
+            
         
-        PhysicsObject naytto = new PhysicsObject(60, 60);
-        naytto.Position = new Vector(Level.Right - 100, Level.Top - 270);
-        naytto.Image = LoadImage("KoodiNaytto");
-        naytto.CanRotate = false;
-        naytto.IgnoresCollisionResponse = true;
-
-        Add(naytto, -1);
     }
 
 
     /// <summary>
     /// Luodaan pelaaja hahmo
     /// </summary>
-    /// <param name="peli">Pelattava peli</param>
     /// <param name="x">Pelaajan koko</param>
     /// <param name="y">Pelaajan koko</param>
     /// <returns>Palauttaa hahmon peliin</returns>
@@ -290,14 +291,14 @@ public class RiddleGame : PhysicsGame
     /// Laskuri joka kertoo montako kelloa olet kerännyt TODO: Myöhemmin myös scoreboard
     /// </summary>
     /// <returns>palauttaa laskurin</returns>
-    private IntMeter KeratytKellot()
+    private static IntMeter KeratytKellot(IntMeter keratty, Game peli)
     {
         keratty = new IntMeter(0); // Luodaan laskuri
         Label keratytlabel = new Label();
         keratytlabel.BindTo(keratty); // Sidotaan laskuri labeliin
         keratytlabel.TextColor = Color.Red; // Määritetään väri
         keratytlabel.Position = new Vector(Screen.Right - 100, Screen.Top - 40); // Sijoitetaan label
-        Add(keratytlabel); // Lisätään label peliin
+        peli.Add(keratytlabel); // Lisätään label peliin
         return keratty; // Palautetaan laskuri
     }
 
@@ -312,6 +313,7 @@ public class RiddleGame : PhysicsGame
         if (aika.Value <= 0)
         {
             peliAjastin.Stop();
+            kelloAjastin.Stop();
             LuoAjastin(50000000, LuoKello);
             Havisit();
         }
@@ -402,7 +404,7 @@ public class RiddleGame : PhysicsGame
     protected override void Update(Time time)
     {
         base.Update(time);
-        puzzle1(_pelaaja);
+        Puzzle1(_pelaaja);
     }
 
 
@@ -411,7 +413,7 @@ public class RiddleGame : PhysicsGame
     /// </summary>
     /// <param name="hahmo">pelattava hahmo</param>
     // ReSharper disable once MemberCanBePrivate.Global
-    public void puzzle1(PhysicsObject hahmo)
+    public void Puzzle1(PhysicsObject hahmo)
     {
         
         if (keratty.Value >= 5)
@@ -426,9 +428,8 @@ public class RiddleGame : PhysicsGame
     /// <summary>
     /// Tehtävä 2 jossa pitää laittaa oikeat luvut jotta peli etenee
     /// </summary>
-    /// <param name="hahmo">pelattava hahmo</param>
     /// <param name="t1">tarkastellaan aiempaa tehtävää</param>
-    private void puzzle2(bool t1)
+    private void Puzzle2(bool t1)
     {
         if (t1)
         {
@@ -450,8 +451,6 @@ public class RiddleGame : PhysicsGame
     /// <summary>
     /// Luo lukko-objektin peliin ja lisää törmäyksen käsittelijän.
     /// </summary>
-    /// <param name="x">Lukon sijainti X-akselilla</param>
-    /// <param name="y">Lukon sijainti Y-akselilla</param>
     private void LuoLukkoJaTormays()
     {
         // Luo lukko-objekti
@@ -505,6 +504,10 @@ public class RiddleGame : PhysicsGame
     }
     
     
+    /// <summary>
+    /// Lisätään numero sarjaan jota käytetään koodilukossa
+    /// </summary>
+    /// <param name="numero">lisättävä numero</param>
     void LisaaNumero(string numero)
     {
         pelaajanVastaus += numero; // Lisää syötetty numero vastaukseen
@@ -518,7 +521,7 @@ public class RiddleGame : PhysicsGame
     {
         if (pelaajanVastaus.Length > 0)
         {
-            pelaajanVastaus = pelaajanVastaus.Remove(pelaajanVastaus.Length - 1);
+            pelaajanVastaus = pelaajanVastaus.Substring(0, pelaajanVastaus.Length - 1);
         }
     }
 
@@ -532,7 +535,6 @@ public class RiddleGame : PhysicsGame
         {
             if (pelaajanVastaus == "1815")
             {
-                Keyboard.Clear();
                 AsetaOhjaimet(_pelaaja);
                 Teksti("Door Opened");
                 task2 = true;
@@ -540,7 +542,6 @@ public class RiddleGame : PhysicsGame
             }
             else
             {
-                Keyboard.Clear();
                 AsetaOhjaimet(_pelaaja);
                 Teksti("*peep sound_effect. Much spoopy*");
             }
@@ -551,12 +552,8 @@ public class RiddleGame : PhysicsGame
     /// <summary>
     /// Jekkuna pitää vielä painaa E kerran jotta pääsee ulos
     /// </summary>
-    /// <param name="t1">task1</param>
-    /// <param name="t2">task2</param>
-
     private void LoppuTeksti()
     { 
-        
         Keyboard.Clear();
         PhysicsObject voitto = new PhysicsObject(Level.Width, Level.Height);
         voitto.X = Level.Center.X;
@@ -565,8 +562,6 @@ public class RiddleGame : PhysicsGame
         Add(voitto, 1);
         MessageDisplay.Add("Esc to quit the game.");
         Keyboard.Listen(Key.Escape, ButtonState.Pressed, ConfirmExit, "quit game");
-        
-        
     }
    
 }

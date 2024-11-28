@@ -8,6 +8,6 @@ build_property.PlatformNeutralAssembly =
 build_property.EnforceExtendedAnalyzerRules = 
 build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property.RootNamespace = RiddleGame
-build_property.ProjectDir = C:\Program Files (x86)\JYU\ohj1ht\RiddleGame\RiddleGame\
+build_property.ProjectDir = C:\Program Files (x86)\JYU\HT\RiddleGame\RiddleGame\
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
